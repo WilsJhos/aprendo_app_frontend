@@ -103,7 +103,7 @@ class _GamePageState extends State<GamePage> {
     super.initState();
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse('http://10.0.2.2:8000/game/${widget.idName}/'));
+      ..loadRequest(Uri.parse('https://aprendo-app-backend.onrender.com/game/${widget.idName}/'));
   }
 
   @override

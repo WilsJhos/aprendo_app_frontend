@@ -5,7 +5,7 @@ import '../models/game_model.dart';
 class ApiService {
   // ⚠️ IMPORTANTE: Si pruebas en un celular real, cambia 'localhost' por tu IP local
   // Ejemplo: 'http://192.168.1.15:8000/api/games/'
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'https://aprendo-app-backend.onrender.com/api';
 
   Future<List<Game>> getGames() async {
     try {
