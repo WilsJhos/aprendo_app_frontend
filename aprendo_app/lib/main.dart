@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:aprendo_app/services/api_service.dart';
 import 'package:aprendo_app/models/game_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const AprendoApp());
@@ -16,14 +18,52 @@ class AprendoApp extends StatelessWidget {
       title: 'Aprendo App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6C63FF),
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
+        fontFamily: 'Roboto',
       ),
       home: const GameListPage(),
     );
   }
 }
 
+// ── MODEL FOR STATS ──
+class GameStat {
+  final String id;
+  final String name;
+  final String emoji;
+  final int sessions;
+  final int totalScore;
+  final int bestScore;
+  final String lastPlayed;
+
+  GameStat({
+    required this.id,
+    required this.name,
+    required this.emoji,
+    required this.sessions,
+    required this.totalScore,
+    required this.bestScore,
+    required this.lastPlayed,
+  });
+
+  factory GameStat.fromJson(String id, Map<String, dynamic> json) {
+    return GameStat(
+      id: id,
+      name: json['name'] ?? id,
+      emoji: json['emoji'] ?? '🎮',
+      sessions: json['sessions'] ?? 0,
+      totalScore: json['totalScore'] ?? 0,
+      bestScore: json['bestScore'] ?? 0,
+      lastPlayed: json['lastPlayed'] ?? '',
+    );
+  }
+}
+
+// ── GAME LIST PAGE ──
 class GameListPage extends StatefulWidget {
   const GameListPage({super.key});
 
@@ -34,62 +74,431 @@ class GameListPage extends StatefulWidget {
 class _GameListPageState extends State<GameListPage> {
   final ApiService apiService = ApiService();
   late Future<List<Game>> futureGames;
+  List<GameStat> rankingStats = [];
 
   @override
   void initState() {
     super.initState();
     futureGames = apiService.getGames();
+    _loadStats();
   }
+
+  Future<void> _loadStats() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys().where((k) => k.startsWith('gstat_'));
+    final stats = <GameStat>[];
+
+    for (final key in keys) {
+      final raw = prefs.getString(key);
+      if (raw == null) continue;
+      try {
+        final json = jsonDecode(raw) as Map<String, dynamic>;
+        final id = key.replaceFirst('gstat_', '');
+        if ((json['sessions'] ?? 0) > 0) {
+          stats.add(GameStat.fromJson(id, json));
+        }
+      } catch (_) {}
+    }
+
+    stats.sort((a, b) => b.sessions.compareTo(a.sessions));
+    if (mounted) setState(() => rankingStats = stats);
+  }
+
+  void _refreshStats() => _loadStats();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Aprendo App - Mis Juegos"),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: FutureBuilder<List<Game>>(
-        future: futureGames,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No hay juegos disponibles"));
-          }
+      backgroundColor: const Color(0xFF0F0C29),
+      body: CustomScrollView(
+        slivers: [
+          // ── APP BAR ──
+          SliverAppBar(
+            expandedHeight: 160,
+            pinned: true,
+            backgroundColor: const Color(0xFF1A1640),
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text(
+                '🌈 Aprendo App',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+              ),
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF6C63FF), Color(0xFF302B63), Color(0xFF0F0C29)],
+                  ),
+                ),
+                child: const Center(
+                  child: Text('🎓', style: TextStyle(fontSize: 60)),
+                ),
+              ),
+            ),
+          ),
 
-          return ListView.builder(
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              final game = snapshot.data![index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading: Text(game.emoji, style: const TextStyle(fontSize: 32)),
-                  title: Text(game.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(game.description),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GamePage(idName: game.idName),
+          // ── RANKING PANEL ──
+          if (rankingStats.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('🏆 Ranking de Juegos',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6C63FF), Color(0xFFec4899)],
+                            ),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: const Text('TU PROGRESO',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 160,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: rankingStats.length,
+                        itemBuilder: (context, i) {
+                          final g = rankingStats[i];
+                          final medals = ['🥇', '🥈', '🥉'];
+                          final medalColors = [
+                            const Color(0xFFFFD700),
+                            const Color(0xFFC0C0C0),
+                            const Color(0xFFCD7F32),
+                          ];
+                          final borderCol = i < 3 ? medalColors[i] : const Color(0xFF6C63FF);
+
+                          return Container(
+                            width: 155,
+                            margin: const EdgeInsets.only(right: 12),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0x1AFFFFFF),
+                              border: Border.all(color: borderCol, width: 1.5),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(i < 3 ? medals[i] : '${i + 1}',
+                                    style: const TextStyle(fontSize: 22)),
+                                const SizedBox(height: 4),
+                                Text(g.emoji, style: const TextStyle(fontSize: 24)),
+                                const SizedBox(height: 4),
+                                Text(g.name,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center),
+                                const SizedBox(height: 8),
+                                _statRow('🎮', 'Sesiones', '${g.sessions}'),
+                                _statRow('⭐', 'Mejor', '${g.bestScore}'),
+                                if (g.lastPlayed.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text('Último: ${g.lastPlayed}',
+                                        style: const TextStyle(
+                                            color: Color(0x99FFFFFF), fontSize: 9)),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                ),
+              ),
+            ),
+
+          if (rankingStats.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('🏆 Ranking de Juegos',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0x1AFFFFFF),
+                        border: Border.all(color: const Color(0x1AFFFFFF)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Text(
+                        'Aún no has jugado ningún juego. ¡Empieza a explorar! 🚀',
+                        style: TextStyle(color: Color(0x99FFFFFF), fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // ── SECTION TITLE ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+              child: Row(
+                children: [
+                  const Text('🎮 Juegos Disponibles',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800)),
+                ],
+              ),
+            ),
+          ),
+
+          // ── GAME GRID ──
+          FutureBuilder<List<Game>>(
+            future: futureGames,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('⚠️', style: TextStyle(fontSize: 48)),
+                        const SizedBox(height: 12),
+                        Text('Error al cargar juegos',
+                            style: const TextStyle(color: Colors.white70)),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => setState(() {
+                            futureGames = apiService.getGames();
+                          }),
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SliverFillRemaining(
+                  child: Center(
+                    child: Text('No hay juegos disponibles',
+                        style: TextStyle(color: Colors.white70)),
+                  ),
+                );
+              }
+
+              final games = snapshot.data!;
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    childAspectRatio: 0.85,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final game = games[index];
+                      final stat = rankingStats.firstWhere(
+                        (s) => s.id == game.idName,
+                        orElse: () => GameStat(
+                            id: '', name: '', emoji: '', sessions: 0,
+                            totalScore: 0, bestScore: 0, lastPlayed: ''),
+                      );
+                      return _GameCard(
+                        game: game,
+                        stat: stat.sessions > 0 ? stat : null,
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GamePage(
+                                idName: game.idName,
+                                gameTitle: game.title,
+                              ),
+                            ),
+                          );
+                          _refreshStats();
+                        },
+                      );
+                    },
+                    childCount: games.length,
+                  ),
                 ),
               );
             },
-          );
-        },
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+        ],
+      ),
+    );
+  }
+
+  Widget _statRow(String icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('$icon $label',
+              style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 10)),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+        ],
       ),
     );
   }
 }
 
+// ── GAME CARD WIDGET ──
+class _GameCard extends StatelessWidget {
+  final Game game;
+  final GameStat? stat;
+  final VoidCallback onTap;
+
+  const _GameCard({required this.game, required this.stat, required this.onTap});
+
+  // Map game to gradient colors
+  static const Map<int, List<Color>> _gradients = {
+    0: [Color(0xFF6C63FF), Color(0xFF9B59B6)],
+    1: [Color(0xFF43E97B), Color(0xFF38F9D7)],
+    2: [Color(0xFFFA709A), Color(0xFFFEE140)],
+    3: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
+    4: [Color(0xFFF7971E), Color(0xFFFFD200)],
+    5: [Color(0xFFB06EFF), Color(0xFF6C63FF)],
+    6: [Color(0xFFFF6584), Color(0xFFFC5C7D)],
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final gradIdx = game.idName.hashCode.abs() % _gradients.length;
+    final colors = _gradients[gradIdx]!;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [colors[0].withOpacity(0.15), colors[1].withOpacity(0.08)],
+          ),
+          border: Border.all(color: colors[0].withOpacity(0.35), width: 1.5),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: colors),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors[0].withOpacity(0.4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        )
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(game.emoji,
+                          style: const TextStyle(fontSize: 30)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(game.title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Text(game.description,
+                      style: const TextStyle(
+                          color: Color(0x80FFFFFF), fontSize: 10),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            // Sessions badge
+            if (stat != null)
+              Positioned(
+                top: 8, right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: colors),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Text(
+                    '${stat!.sessions} ${stat!.sessions == 1 ? "sesión" : "sesiones"}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── GAME PAGE (WebView) ──
 class GamePage extends StatefulWidget {
   final String idName;
-  const GamePage({super.key, required this.idName});
+  final String gameTitle;
+  const GamePage({super.key, required this.idName, required this.gameTitle});
 
   @override
   State<GamePage> createState() => _GamePageState();
@@ -97,20 +506,101 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   late final WebViewController controller;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse('https://aprendo-app-backend.onrender.com/game/${widget.idName}/'));
+      ..setBackgroundColor(const Color(0xFF0F0C29))
+      ..addJavaScriptChannel(
+        'FlutterStorage',
+        onMessageReceived: (msg) async {
+          // Handle game stats sent from the game's JS
+          try {
+            final data = jsonDecode(msg.message) as Map<String, dynamic>;
+            final key = 'gstat_${widget.idName}';
+            final prefs = await SharedPreferences.getInstance();
+            prefs.setString(key, jsonEncode(data));
+          } catch (_) {}
+        },
+      )
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) => setState(() => isLoading = true),
+          onPageFinished: (_) {
+            setState(() => isLoading = false);
+            // Inject JS to sync localStorage stats to Flutter via FlutterStorage
+            controller.runJavaScript('''
+              (function() {
+                const key = 'gstat_${widget.idName}';
+                setInterval(function() {
+                  const raw = localStorage.getItem(key);
+                  if (raw && window.FlutterStorage) {
+                    try {
+                      FlutterStorage.postMessage(raw);
+                    } catch(e) {}
+                  }
+                }, 5000);
+              })();
+            ''');
+          },
+        ),
+      )
+      ..loadRequest(
+        Uri.parse('https://aprendo-app-backend.onrender.com/game/${widget.idName}/'),
+      );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Jugando...")),
-      body: WebViewWidget(controller: controller),
+      backgroundColor: const Color(0xFF0F0C29),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1640),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.gameTitle,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+            onPressed: () => controller.reload(),
+            tooltip: 'Recargar',
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: controller),
+          if (isLoading)
+            Container(
+              color: const Color(0xFF0F0C29),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('🎮', style: TextStyle(fontSize: 60)),
+                    SizedBox(height: 20),
+                    CircularProgressIndicator(color: Color(0xFF6C63FF)),
+                    SizedBox(height: 16),
+                    Text('Cargando juego...',
+                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
