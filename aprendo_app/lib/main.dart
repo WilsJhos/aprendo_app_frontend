@@ -4,6 +4,7 @@ import 'package:aprendo_app/services/api_service.dart';
 import 'package:aprendo_app/models/game_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter_tts/flutter_tts.dart';
 
 void main() {
   runApp(const AprendoApp());
@@ -510,10 +511,16 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   late final WebViewController controller;
   bool isLoading = true;
+  late final FlutterTts flutterTts;
 
   @override
   void initState() {
     super.initState();
+    flutterTts = FlutterTts();
+    // Optional default settings
+    flutterTts.setLanguage('es-ES');
+    flutterTts.setSpeechRate(0.9);
+    flutterTts.setPitch(1.0);
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF0F0C29))
@@ -527,6 +534,28 @@ class _GamePageState extends State<GamePage> {
             final key = 'gstat_${widget.idName}';
             final prefs = await SharedPreferences.getInstance();
             prefs.setString(key, jsonEncode(data));
+          } catch (_) {}
+        },
+      )
+      ..addJavaScriptChannel(
+        'FlutterTTS',
+        onMessageReceived: (msg) async {
+          try {
+            final raw = msg.message;
+            String text = raw;
+            double rate = 0.9;
+            double pitch = 1.0;
+            try {
+              final parsed = jsonDecode(raw);
+              if (parsed is Map) {
+                text = parsed['text']?.toString() ?? raw;
+                rate = (parsed['rate'] is num) ? (parsed['rate'] as num).toDouble() : rate;
+                pitch = (parsed['pitch'] is num) ? (parsed['pitch'] as num).toDouble() : pitch;
+              }
+            } catch (_) {}
+            await flutterTts.setSpeechRate(rate);
+            await flutterTts.setPitch(pitch);
+            await flutterTts.speak(text);
           } catch (_) {}
         },
       )
@@ -549,6 +578,19 @@ class _GamePageState extends State<GamePage> {
                 }, 5000);
               })();
             ''');
+            // Inject a helper so the page can call `window.speak(text, rate, pitch)`
+            controller.runJavaScript('''
+              (function() {
+                window.speak = function(text, rate, pitch) {
+                  try {
+                    const payload = JSON.stringify({text: text, rate: rate, pitch: pitch});
+                    if (window.FlutterTTS) FlutterTTS.postMessage(payload);
+                  } catch(e) {
+                    try { if (window.FlutterTTS) FlutterTTS.postMessage(text); } catch(_) {}
+                  }
+                };
+              })();
+            ''');
           },
         ),
       )
@@ -557,6 +599,11 @@ class _GamePageState extends State<GamePage> {
       );
   }
 
+  @override
+  void dispose() {
+    try { flutterTts.stop(); } catch (_) {}
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
