@@ -445,8 +445,11 @@ class _GameCard extends StatelessWidget {
                       ],
                     ),
                     child: Center(
-                      child: Text(game.emoji,
-                          style: const TextStyle(fontSize: 30)),
+                      child: Builder(builder: (_) {
+                        // Override emoji for specific games that were updated server-side
+                        final displayEmoji = (game.idName == 'rutinas' || game.idName == 'rutina') ? '🍎' : game.emoji;
+                        return Text(displayEmoji, style: const TextStyle(fontSize: 30));
+                      }),
                     ),
                   ),
                   const SizedBox(height: 12),
