@@ -529,7 +529,7 @@ class _GamePageState extends State<GamePage> {
           try {
             // Print raw message to flutter logs for debugging
             // ignore: avoid_print
-            print('FlutterStorage message: ' + msg.message);
+            print('[DEBUG][FlutterStorage] message: ' + msg.message);
             // Try to parse as JSON stats and persist
             final data = jsonDecode(msg.message);
             if (data is Map<String, dynamic>) {
@@ -538,6 +538,7 @@ class _GamePageState extends State<GamePage> {
               prefs.setString(key, jsonEncode(data));
             }
           } catch (e) {
+            print('[DEBUG][FlutterStorage] parse/error: $e');
             // ignore parsing errors, message may be a debug/error string
           }
         },
@@ -547,6 +548,9 @@ class _GamePageState extends State<GamePage> {
         onMessageReceived: (msg) async {
           try {
             final raw = msg.message;
+            // Debug log incoming TTS payload
+            // ignore: avoid_print
+            print('[DEBUG][FlutterTTS] received: ' + raw);
             String text = raw;
             double rate = 0.9;
             double pitch = 1.0;
@@ -558,6 +562,9 @@ class _GamePageState extends State<GamePage> {
                 pitch = (parsed['pitch'] is num) ? (parsed['pitch'] as num).toDouble() : pitch;
               }
             } catch (_) {}
+            // Debug settings
+            // ignore: avoid_print
+            print('[DEBUG][FlutterTTS] speak params -> text: "${text}", rate: ${rate}, pitch: ${pitch}');
             await flutterTts.setSpeechRate(rate);
             await flutterTts.setPitch(pitch);
             await flutterTts.speak(text);
@@ -567,7 +574,16 @@ class _GamePageState extends State<GamePage> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_) => setState(() => isLoading = true),
-          onPageFinished: (_) {
+          onPageStarted: (_){
+            // Debug: page started
+            // ignore: avoid_print
+            print('[DEBUG][WebView] onPageStarted: ${widget.idName}');
+            setState(() => isLoading = true);
+          },
+          onPageFinished: (_){
+            // Debug: page finished
+            // ignore: avoid_print
+            print('[DEBUG][WebView] onPageFinished: ${widget.idName}');
             setState(() => isLoading = false);
             // Inject JS to sync localStorage stats to Flutter via FlutterStorage
             controller.runJavaScript('''
@@ -594,6 +610,9 @@ class _GamePageState extends State<GamePage> {
                 console.log = function(){ try { forward('CONSOLE LOG: '+Array.from(arguments).join(' | ')); } catch(e){}; if(origLog) origLog.apply(console, arguments); };
               })();
             ''');
+            // Debug: JS forwarding injected
+            // ignore: avoid_print
+            print('[DEBUG][WebView] injected JS forwarding for ${widget.idName}');
             // Inject a helper so the page can call `window.speak(text, rate, pitch)`
             controller.runJavaScript('''
               (function() {
