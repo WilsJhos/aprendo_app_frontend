@@ -570,6 +570,14 @@ class _GamePageState extends State<GamePage> {
           } catch (_) {}
         },
       )
+      ..addJavaScriptChannel(
+        'FlutterTTS_Cancel',
+        onMessageReceived: (msg) async {
+          try {
+            await flutterTts.stop();
+          } catch (_) {}
+        },
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_){
@@ -611,15 +619,84 @@ class _GamePageState extends State<GamePage> {
             // Debug: JS forwarding injected
             // ignore: avoid_print
             print('[DEBUG][WebView] injected JS forwarding for ${widget.idName}');
-            // Inject a helper so the page can call `window.speak(text, rate, pitch)`
+            // Inject Web Speech API interceptor to route native TTS to Flutter
             controller.runJavaScript('''
               (function() {
+                // Keep the old helper just in case
                 window.speak = function(text, rate, pitch) {
                   try {
                     const payload = JSON.stringify({text: text, rate: rate, pitch: pitch});
                     if (window.FlutterTTS) FlutterTTS.postMessage(payload);
                   } catch(e) {
                     try { if (window.FlutterTTS) FlutterTTS.postMessage(text); } catch(_) {}
+                  }
+                };
+
+                // Polyfill SpeechSynthesisUtterance if not supported
+                if (typeof window.SpeechSynthesisUtterance === 'undefined') {
+                  window.SpeechSynthesisUtterance = function(text) {
+                    this.text = text || '';
+                    this.rate = 1.0;
+                    this.pitch = 1.0;
+                    this.volume = 1.0;
+                    this.lang = 'es-ES';
+                  };
+                }
+
+                // Intercept window.speechSynthesis
+                if (!window.speechSynthesis) {
+                  window.speechSynthesis = {};
+                }
+                const originalSpeak = window.speechSynthesis.speak;
+                const originalCancel = window.speechSynthesis.cancel;
+                
+                window.speechSynthesis.getVoices = function() {
+                  return [{
+                    default: true,
+                    lang: 'es-ES',
+                    localService: true,
+                    name: 'Flutter TTS (es-ES)',
+                    voiceURI: 'Flutter TTS (es-ES)'
+                  }];
+                };
+                
+                window.speechSynthesis.speak = function(utterance) {
+                  if (window.FlutterTTS) {
+                    try {
+                      let r = utterance.rate !== undefined ? utterance.rate : 0.9;
+                      let p = utterance.pitch !== undefined ? utterance.pitch : 1.0;
+                      // Fallback when values are somehow invalid
+                      if (isNaN(r) || r <= 0) r = 1.0;
+                      if (isNaN(p) || p <= 0) p = 1.0;
+
+                      const payload = JSON.stringify({ text: utterance.text, rate: r, pitch: p });
+                      FlutterTTS.postMessage(payload);
+                      
+                      // Emulate Web Speech API events for game logic
+                      if (utterance.onstart) {
+                        setTimeout(function() { utterance.onstart({ type: 'start', utterance: utterance }); }, 50);
+                      }
+                      if (utterance.onend) {
+                        // rough estimation: ~80ms per char
+                        const durationMs = Math.max(1000, (utterance.text.length * 80) / r);
+                        setTimeout(function() { utterance.onend({ type: 'end', utterance: utterance }); }, durationMs);
+                      }
+                    } catch(e) {
+                      try { FlutterTTS.postMessage(utterance.text || ''); } catch(_) {}
+                    }
+                  } else if (originalSpeak) {
+                    originalSpeak.call(window.speechSynthesis, utterance);
+                  }
+                };
+                
+                window.speechSynthesis.cancel = function() {
+                  try {
+                    if (window.FlutterTTS_Cancel) {
+                      FlutterTTS_Cancel.postMessage('cancel');
+                    }
+                  } catch(e) {}
+                  if (originalCancel) {
+                    try { originalCancel.call(window.speechSynthesis); } catch(e){}
                   }
                 };
               })();
