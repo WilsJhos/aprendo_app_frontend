@@ -521,7 +521,6 @@ class _GamePageState extends State<GamePage> {
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF0F0C29))
-      ..setMediaPlaybackRequiresUserGesture(false)
       ..addJavaScriptChannel(
         'FlutterStorage',
         onMessageReceived: (msg) async {
@@ -573,7 +572,6 @@ class _GamePageState extends State<GamePage> {
       )
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (_) => setState(() => isLoading = true),
           onPageStarted: (_){
             // Debug: page started
             // ignore: avoid_print
