@@ -525,13 +525,21 @@ class _GamePageState extends State<GamePage> {
       ..addJavaScriptChannel(
         'FlutterStorage',
         onMessageReceived: (msg) async {
-          // Handle game stats sent from the game's JS
+          // Handle game stats sent from the game's JS and surface JS errors/logs
           try {
-            final data = jsonDecode(msg.message) as Map<String, dynamic>;
-            final key = 'gstat_${widget.idName}';
-            final prefs = await SharedPreferences.getInstance();
-            prefs.setString(key, jsonEncode(data));
-          } catch (_) {}
+            // Print raw message to flutter logs for debugging
+            // ignore: avoid_print
+            print('FlutterStorage message: ' + msg.message);
+            // Try to parse as JSON stats and persist
+            final data = jsonDecode(msg.message);
+            if (data is Map<String, dynamic>) {
+              final key = 'gstat_${widget.idName}';
+              final prefs = await SharedPreferences.getInstance();
+              prefs.setString(key, jsonEncode(data));
+            }
+          } catch (e) {
+            // ignore parsing errors, message may be a debug/error string
+          }
         },
       )
       ..addJavaScriptChannel(
@@ -575,6 +583,17 @@ class _GamePageState extends State<GamePage> {
                 }, 5000);
               })();
             ''');
+            // Inject error and console forwarding so Flutter can log JS errors
+            controller.runJavaScript('''
+              (function() {
+                function forward(msg){ try { if(window.FlutterStorage) FlutterStorage.postMessage('[JS] '+msg); } catch(e){} }
+                window.onerror = function(msg, src, line, col, err) { forward('ERROR: '+msg+' at '+src+':'+line+':'+col); };
+                const origErr = console.error;
+                console.error = function(){ try { forward('CONSOLE ERROR: '+Array.from(arguments).join(' | ')); } catch(e){}; if(origErr) origErr.apply(console, arguments); };
+                const origLog = console.log;
+                console.log = function(){ try { forward('CONSOLE LOG: '+Array.from(arguments).join(' | ')); } catch(e){}; if(origLog) origLog.apply(console, arguments); };
+              })();
+            ''');
             // Inject a helper so the page can call `window.speak(text, rate, pitch)`
             controller.runJavaScript('''
               (function() {
@@ -599,23 +618,36 @@ class _GamePageState extends State<GamePage> {
   Future<void> _initTts() async {
     flutterTts = FlutterTts();
     try {
-      await flutterTts.awaitSpeakCompletion(true);
+      // Configurar idioma español
       await flutterTts.setLanguage('es-ES');
+      await flutterTts.awaitSpeakCompletion(true);
       await flutterTts.setSpeechRate(0.9);
       await flutterTts.setPitch(1.0);
       await flutterTts.setVolume(1.0);
+      
+      // Intentar usar el motor Google Text-to-Speech si está disponible
+      await flutterTts.setEngine('com.google.android.tts');
 
       flutterTts.setStartHandler(() {
-        // debug start
+        print('[TTS] Iniciando síntesis de voz');
       });
       flutterTts.setCompletionHandler(() {
-        // debug complete
+        print('[TTS] Síntesis completada');
       });
       flutterTts.setErrorHandler((msg) {
-        // debug error
+        print('[TTS] Error: $msg');
       });
+      
+      print('[TTS] Inicialización completada correctamente');
     } catch (e) {
-      // ignore init errors
+      print('[TTS] Error durante la inicialización: $e');
+      // Intentar inicializar con configuración mínima como fallback
+      try {
+        await flutterTts.setLanguage('es-ES');
+        print('[TTS] Configuración mínima de fallback completada');
+      } catch (fallbackError) {
+        print('[TTS] Error en fallback: $fallbackError');
+      }
     }
   }
 
