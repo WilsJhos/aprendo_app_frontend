@@ -516,11 +516,8 @@ class _GamePageState extends State<GamePage> {
   @override
   void initState() {
     super.initState();
-    flutterTts = FlutterTts();
-    // Optional default settings
-    flutterTts.setLanguage('es-ES');
-    flutterTts.setSpeechRate(0.9);
-    flutterTts.setPitch(1.0);
+    // Initialize TTS asynchronously to ensure plugin is ready on Android
+    _initTts();
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF0F0C29))
@@ -597,6 +594,29 @@ class _GamePageState extends State<GamePage> {
       ..loadRequest(
         Uri.parse('https://aprendo-app-backend.onrender.com/game/${widget.idName}/'),
       );
+  }
+
+  Future<void> _initTts() async {
+    flutterTts = FlutterTts();
+    try {
+      await flutterTts.awaitSpeakCompletion(true);
+      await flutterTts.setLanguage('es-ES');
+      await flutterTts.setSpeechRate(0.9);
+      await flutterTts.setPitch(1.0);
+      await flutterTts.setVolume(1.0);
+
+      flutterTts.setStartHandler(() {
+        // debug start
+      });
+      flutterTts.setCompletionHandler(() {
+        // debug complete
+      });
+      flutterTts.setErrorHandler((msg) {
+        // debug error
+      });
+    } catch (e) {
+      // ignore init errors
+    }
   }
 
   @override
