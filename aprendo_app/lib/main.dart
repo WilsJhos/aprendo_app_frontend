@@ -610,10 +610,6 @@ class _GamePageState extends State<GamePage> {
       backgroundColor: const Color(0xFF0F0C29),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1640),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Text(
           widget.gameTitle,
           style: const TextStyle(
@@ -633,6 +629,29 @@ class _GamePageState extends State<GamePage> {
       body: Stack(
         children: [
           WebViewWidget(controller: controller),
+          // Floating back button for easier access on mobile
+          Positioned(
+            top: 70,
+            left: 16,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: const [
+                    Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+                    SizedBox(width: 6),
+                    Text('Atrás', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ),
+          ),
           if (isLoading)
             Container(
               color: const Color(0xFF0F0C29),
