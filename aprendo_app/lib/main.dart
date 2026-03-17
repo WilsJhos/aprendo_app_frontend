@@ -551,7 +551,7 @@ class _GamePageState extends State<GamePage> {
             // ignore: avoid_print
             print('[DEBUG][FlutterTTS] received: ' + raw);
             String text = raw;
-            double rate = 0.9;
+            double rate = 0.45; // Default slower rate
             double pitch = 1.0;
             try {
               final parsed = jsonDecode(raw);
@@ -663,10 +663,14 @@ class _GamePageState extends State<GamePage> {
                 window.speechSynthesis.speak = function(utterance) {
                   if (window.FlutterTTS) {
                     try {
-                      let r = utterance.rate !== undefined ? utterance.rate : 0.9;
+                      // Normalize the rate. Some browsers use 1.0, some games might pass 0.9.
+                      // If the game passes its own rate, we divide it to make it slower globally.
+                      let r = utterance.rate !== undefined ? utterance.rate : 1.0;
+                      r = r * 0.45; // Slow down whatever rate is passed by half
+                      
                       let p = utterance.pitch !== undefined ? utterance.pitch : 1.0;
                       // Fallback when values are somehow invalid
-                      if (isNaN(r) || r <= 0) r = 1.0;
+                      if (isNaN(r) || r <= 0) r = 0.45;
                       if (isNaN(p) || p <= 0) p = 1.0;
 
                       const payload = JSON.stringify({ text: utterance.text, rate: r, pitch: p });
