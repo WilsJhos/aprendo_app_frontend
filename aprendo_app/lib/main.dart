@@ -31,7 +31,6 @@ class AprendoApp extends StatelessWidget {
   }
 }
 
-// ── MODEL FOR STATS ──
 class GameStat {
   final String id;
   final String name;
@@ -64,7 +63,6 @@ class GameStat {
   }
 }
 
-// ── GAME LIST PAGE ──
 class GameListPage extends StatefulWidget {
   const GameListPage({super.key});
 
@@ -113,7 +111,6 @@ class _GameListPageState extends State<GameListPage> {
       backgroundColor: const Color(0xFF0F0C29),
       body: CustomScrollView(
         slivers: [
-          // ── APP BAR ──
           SliverAppBar(
             expandedHeight: 160,
             pinned: true,
@@ -128,7 +125,11 @@ class _GameListPageState extends State<GameListPage> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF6C63FF), Color(0xFF302B63), Color(0xFF0F0C29)],
+                    colors: [
+                      Color(0xFF6C63FF),
+                      Color(0xFF302B63),
+                      Color(0xFF0F0C29),
+                    ],
                   ),
                 ),
                 child: const Center(
@@ -138,7 +139,6 @@ class _GameListPageState extends State<GameListPage> {
             ),
           ),
 
-          // ── RANKING PANEL ──
           if (rankingStats.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
@@ -148,26 +148,35 @@ class _GameListPageState extends State<GameListPage> {
                   children: [
                     Row(
                       children: [
-                        const Text('🏆 Ranking de Juegos',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800)),
+                        const Text(
+                          '🏆 Ranking de Juegos',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFF6C63FF), Color(0xFFec4899)],
                             ),
                             borderRadius: BorderRadius.circular(50),
                           ),
-                          child: const Text('TU PROGRESO',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.5)),
+                          child: const Text(
+                            'TU PROGRESO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -185,7 +194,9 @@ class _GameListPageState extends State<GameListPage> {
                             const Color(0xFFC0C0C0),
                             const Color(0xFFCD7F32),
                           ];
-                          final borderCol = i < 3 ? medalColors[i] : const Color(0xFF6C63FF);
+                          final borderCol = i < 3
+                              ? medalColors[i]
+                              : const Color(0xFF6C63FF);
 
                           return Container(
                             width: 155,
@@ -199,28 +210,40 @@ class _GameListPageState extends State<GameListPage> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(i < 3 ? medals[i] : '${i + 1}',
-                                    style: const TextStyle(fontSize: 22)),
+                                Text(
+                                  i < 3 ? medals[i] : '${i + 1}',
+                                  style: const TextStyle(fontSize: 22),
+                                ),
                                 const SizedBox(height: 4),
-                                Text(g.emoji, style: const TextStyle(fontSize: 24)),
+                                Text(
+                                  g.emoji,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
                                 const SizedBox(height: 4),
-                                Text(g.name,
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center),
+                                Text(
+                                  g.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
                                 const SizedBox(height: 8),
                                 _statRow('🎮', 'Sesiones', '${g.sessions}'),
                                 _statRow('⭐', 'Mejor', '${g.bestScore}'),
                                 if (g.lastPlayed.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
-                                    child: Text('Último: ${g.lastPlayed}',
-                                        style: const TextStyle(
-                                            color: Color(0x99FFFFFF), fontSize: 9)),
+                                    child: Text(
+                                      'Último: ${g.lastPlayed}',
+                                      style: const TextStyle(
+                                        color: Color(0x99FFFFFF),
+                                        fontSize: 9,
+                                      ),
+                                    ),
                                   ),
                               ],
                             ),
@@ -241,11 +264,14 @@ class _GameListPageState extends State<GameListPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('🏆 Ranking de Juegos',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800)),
+                    const Text(
+                      '🏆 Ranking de Juegos',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
@@ -257,7 +283,10 @@ class _GameListPageState extends State<GameListPage> {
                       ),
                       child: const Text(
                         'Aún no has jugado ningún juego. ¡Empieza a explorar! 🚀',
-                        style: TextStyle(color: Color(0x99FFFFFF), fontSize: 13),
+                        style: TextStyle(
+                          color: Color(0x99FFFFFF),
+                          fontSize: 13,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -266,23 +295,24 @@ class _GameListPageState extends State<GameListPage> {
               ),
             ),
 
-          // ── SECTION TITLE ──
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
               child: Row(
                 children: [
-                  const Text('🎮 Juegos Disponibles',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800)),
+                  const Text(
+                    '🎮 Juegos Disponibles',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
 
-          // ── GAME GRID ──
           FutureBuilder<List<Game>>(
             future: futureGames,
             builder: (context, snapshot) {
@@ -300,8 +330,10 @@ class _GameListPageState extends State<GameListPage> {
                       children: [
                         const Text('⚠️', style: TextStyle(fontSize: 48)),
                         const SizedBox(height: 12),
-                        Text('Error al cargar juegos',
-                            style: const TextStyle(color: Colors.white70)),
+                        Text(
+                          'Error al cargar juegos',
+                          style: const TextStyle(color: Colors.white70),
+                        ),
                         const SizedBox(height: 8),
                         ElevatedButton(
                           onPressed: () => setState(() {
@@ -316,8 +348,10 @@ class _GameListPageState extends State<GameListPage> {
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const SliverFillRemaining(
                   child: Center(
-                    child: Text('No hay juegos disponibles',
-                        style: TextStyle(color: Colors.white70)),
+                    child: Text(
+                      'No hay juegos disponibles',
+                      style: TextStyle(color: Colors.white70),
+                    ),
                   ),
                 );
               }
@@ -332,34 +366,37 @@ class _GameListPageState extends State<GameListPage> {
                     mainAxisSpacing: 14,
                     childAspectRatio: 0.85,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final game = games[index];
-                      final stat = rankingStats.firstWhere(
-                        (s) => s.id == game.idName,
-                        orElse: () => GameStat(
-                            id: '', name: '', emoji: '', sessions: 0,
-                            totalScore: 0, bestScore: 0, lastPlayed: ''),
-                      );
-                      return _GameCard(
-                        game: game,
-                        stat: stat.sessions > 0 ? stat : null,
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => GamePage(
-                                idName: game.idName,
-                                gameTitle: game.title,
-                              ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final game = games[index];
+                    final stat = rankingStats.firstWhere(
+                      (s) => s.id == game.idName,
+                      orElse: () => GameStat(
+                        id: '',
+                        name: '',
+                        emoji: '',
+                        sessions: 0,
+                        totalScore: 0,
+                        bestScore: 0,
+                        lastPlayed: '',
+                      ),
+                    );
+                    return _GameCard(
+                      game: game,
+                      stat: stat.sessions > 0 ? stat : null,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => GamePage(
+                              idName: game.idName,
+                              gameTitle: game.title,
                             ),
-                          );
-                          _refreshStats();
-                        },
-                      );
-                    },
-                    childCount: games.length,
-                  ),
+                          ),
+                        );
+                        _refreshStats();
+                      },
+                    );
+                  }, childCount: games.length),
                 ),
               );
             },
@@ -377,24 +414,34 @@ class _GameListPageState extends State<GameListPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('$icon $label',
-              style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 10)),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+          Text(
+            '$icon $label',
+            style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 10),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ── GAME CARD WIDGET ──
 class _GameCard extends StatelessWidget {
   final Game game;
   final GameStat? stat;
   final VoidCallback onTap;
 
-  const _GameCard({required this.game, required this.stat, required this.onTap});
+  const _GameCard({
+    required this.game,
+    required this.stat,
+    required this.onTap,
+  });
 
   // Map game to gradient colors
   static const Map<int, List<Color>> _gradients = {
@@ -442,42 +489,61 @@ class _GameCard extends StatelessWidget {
                           color: colors[0].withOpacity(0.4),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
-                        )
+                        ),
                       ],
                     ),
                     child: Center(
-                      child: Builder(builder: (_) {
-                        // Override emoji for specific games that were updated server-side
-                        final displayEmoji = (game.idName == 'rutinas' || game.idName == 'rutina') ? '🍎' : game.emoji;
-                        return Text(displayEmoji, style: const TextStyle(fontSize: 30));
-                      }),
+                      child: Builder(
+                        builder: (_) {
+                          final displayEmoji =
+                              (game.idName == 'rutinas' ||
+                                  game.idName == 'rutina')
+                              ? '🍎'
+                              : game.emoji;
+                          return Text(
+                            displayEmoji,
+                            style: const TextStyle(fontSize: 30),
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(game.title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    game.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 4),
-                  Text(game.description,
-                      style: const TextStyle(
-                          color: Color(0x80FFFFFF), fontSize: 10),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    game.description,
+                    style: const TextStyle(
+                      color: Color(0x80FFFFFF),
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
             // Sessions badge
             if (stat != null)
               Positioned(
-                top: 8, right: 8,
+                top: 8,
+                right: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(colors: colors),
                     borderRadius: BorderRadius.circular(50),
@@ -485,9 +551,10 @@ class _GameCard extends StatelessWidget {
                   child: Text(
                     '${stat!.sessions} ${stat!.sessions == 1 ? "sesión" : "sesiones"}',
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700),
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -498,7 +565,6 @@ class _GameCard extends StatelessWidget {
   }
 }
 
-// ── GAME PAGE (WebView) ──
 class GamePage extends StatefulWidget {
   final String idName;
   final String gameTitle;
@@ -516,7 +582,7 @@ class _GamePageState extends State<GamePage> {
   @override
   void initState() {
     super.initState();
-    // Initialize TTS asynchronously to ensure plugin is ready on Android
+    // Voces TTS
     _initTts();
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -524,12 +590,9 @@ class _GamePageState extends State<GamePage> {
       ..addJavaScriptChannel(
         'FlutterStorage',
         onMessageReceived: (msg) async {
-          // Handle game stats sent from the game's JS and surface JS errors/logs
           try {
-            // Print raw message to flutter logs for debugging
-            // ignore: avoid_print
             print('[DEBUG][FlutterStorage] message: ' + msg.message);
-            // Try to parse as JSON stats and persist
+
             final data = jsonDecode(msg.message);
             if (data is Map<String, dynamic>) {
               final key = 'gstat_${widget.idName}';
@@ -538,7 +601,6 @@ class _GamePageState extends State<GamePage> {
             }
           } catch (e) {
             print('[DEBUG][FlutterStorage] parse/error: $e');
-            // ignore parsing errors, message may be a debug/error string
           }
         },
       )
@@ -547,23 +609,39 @@ class _GamePageState extends State<GamePage> {
         onMessageReceived: (msg) async {
           try {
             final raw = msg.message;
-            // Debug log incoming TTS payload
-            // ignore: avoid_print
+
             print('[DEBUG][FlutterTTS] received: ' + raw);
             String text = raw;
-            double rate = 0.45; // Default slower rate
+            double rate = 0.45;
             double pitch = 1.0;
             try {
               final parsed = jsonDecode(raw);
               if (parsed is Map) {
                 text = parsed['text']?.toString() ?? raw;
-                rate = (parsed['rate'] is num) ? (parsed['rate'] as num).toDouble() : rate;
-                pitch = (parsed['pitch'] is num) ? (parsed['pitch'] as num).toDouble() : pitch;
+                rate = (parsed['rate'] is num)
+                    ? (parsed['rate'] as num).toDouble()
+                    : rate;
+                pitch = (parsed['pitch'] is num)
+                    ? (parsed['pitch'] as num).toDouble()
+                    : pitch;
               }
             } catch (_) {}
-            // Debug settings
-            // ignore: avoid_print
-            print('[DEBUG][FlutterTTS] speak params -> text: "${text}", rate: ${rate}, pitch: ${pitch}');
+
+            pitch = 1.0;
+
+            if ([
+              'numeros',
+              'numero_master',
+              'terapeutico',
+            ].contains(widget.idName)) {
+              rate = text.length < 12 ? 0.5 : 0.4;
+            } else if (rate > 0.55) {
+              rate = 0.55;
+            }
+
+            print(
+              '[DEBUG][FlutterTTS] speak params -> text: "$text", rate: $rate, pitch: $pitch',
+            );
             await flutterTts.setSpeechRate(rate);
             await flutterTts.setPitch(pitch);
             await flutterTts.speak(text);
@@ -580,18 +658,14 @@ class _GamePageState extends State<GamePage> {
       )
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (_){
-            // Debug: page started
-            // ignore: avoid_print
+          onPageStarted: (_) {
             print('[DEBUG][WebView] onPageStarted: ${widget.idName}');
             setState(() => isLoading = true);
           },
-          onPageFinished: (_){
-            // Debug: page finished
-            // ignore: avoid_print
+          onPageFinished: (_) {
             print('[DEBUG][WebView] onPageFinished: ${widget.idName}');
             setState(() => isLoading = false);
-            // Inject JS to sync localStorage stats to Flutter via FlutterStorage
+
             controller.runJavaScript('''
               (function() {
                 const key = 'gstat_${widget.idName}';
@@ -605,7 +679,7 @@ class _GamePageState extends State<GamePage> {
                 }, 5000);
               })();
             ''');
-            // Inject error and console forwarding so Flutter can log JS errors
+
             controller.runJavaScript('''
               (function() {
                 function forward(msg){ try { if(window.FlutterStorage) FlutterStorage.postMessage('[JS] '+msg); } catch(e){} }
@@ -616,10 +690,11 @@ class _GamePageState extends State<GamePage> {
                 console.log = function(){ try { forward('CONSOLE LOG: '+Array.from(arguments).join(' | ')); } catch(e){}; if(origLog) origLog.apply(console, arguments); };
               })();
             ''');
-            // Debug: JS forwarding injected
-            // ignore: avoid_print
-            print('[DEBUG][WebView] injected JS forwarding for ${widget.idName}');
-            // Inject Web Speech API interceptor to route native TTS to Flutter
+
+            print(
+              '[DEBUG][WebView] injected JS forwarding for ${widget.idName}',
+            );
+
             controller.runJavaScript('''
               (function() {
                 // Keep the old helper just in case
@@ -709,21 +784,22 @@ class _GamePageState extends State<GamePage> {
         ),
       )
       ..loadRequest(
-        Uri.parse('https://aprendo-app-backend.onrender.com/game/${widget.idName}/'),
+        Uri.parse(
+          'https://aprendo-app-backend.onrender.com/game/${widget.idName}/',
+        ),
       );
   }
 
   Future<void> _initTts() async {
     flutterTts = FlutterTts();
     try {
-      // Configurar idioma español
+      // idioma español
       await flutterTts.setLanguage('es-ES');
       await flutterTts.awaitSpeakCompletion(true);
-      await flutterTts.setSpeechRate(0.9);
+      await flutterTts.setSpeechRate(0.45);
       await flutterTts.setPitch(1.0);
       await flutterTts.setVolume(1.0);
-      
-      // Intentar usar el motor Google Text-to-Speech si está disponible
+
       await flutterTts.setEngine('com.google.android.tts');
 
       flutterTts.setStartHandler(() {
@@ -735,11 +811,11 @@ class _GamePageState extends State<GamePage> {
       flutterTts.setErrorHandler((msg) {
         print('[TTS] Error: $msg');
       });
-      
+
       print('[TTS] Inicialización completada correctamente');
     } catch (e) {
       print('[TTS] Error durante la inicialización: $e');
-      // Intentar inicializar con configuración mínima como fallback
+
       try {
         await flutterTts.setLanguage('es-ES');
         print('[TTS] Configuración mínima de fallback completada');
@@ -751,9 +827,12 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
-    try { flutterTts.stop(); } catch (_) {}
+    try {
+      flutterTts.stop();
+    } catch (_) {}
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -779,7 +858,7 @@ class _GamePageState extends State<GamePage> {
       body: Stack(
         children: [
           WebViewWidget(controller: controller),
-          // Floating back button for easier access on mobile
+
           Positioned(
             top: 70,
             left: 16,
@@ -791,12 +870,25 @@ class _GamePageState extends State<GamePage> {
                   borderRadius: BorderRadius.circular(50),
                   boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: const [
-                    Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+                    Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                     SizedBox(width: 6),
-                    Text('Atrás', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Atrás',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -813,8 +905,10 @@ class _GamePageState extends State<GamePage> {
                     SizedBox(height: 20),
                     CircularProgressIndicator(color: Color(0xFF6C63FF)),
                     SizedBox(height: 16),
-                    Text('Cargando juego...',
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(
+                      'Cargando juego...',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
                   ],
                 ),
               ),
