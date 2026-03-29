@@ -866,7 +866,10 @@ class _GamePageState extends State<GamePage> {
             child: GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(30),
@@ -881,17 +884,12 @@ class _GamePageState extends State<GamePage> {
                 ),
                 child: Row(
                   children: const [
-                    Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'VOLVER',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        letterSpacing: 1.2,
-                      ),
+                    Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                      size: 18,
                     ),
+                    SizedBox(width: 8),
                   ],
                 ),
               ),
