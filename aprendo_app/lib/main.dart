@@ -857,36 +857,39 @@ class _GamePageState extends State<GamePage> {
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: controller),
+          SafeArea(child: WebViewWidget(controller: controller)),
 
+          // Botón Atrás Premium (Flotante con Glassmorphism)
           Positioned(
-            top: 70,
+            top: MediaQuery.of(context).padding.top + 10,
             left: 16,
             child: GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                  color: Colors.black.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: const [
-                    Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    SizedBox(width: 6),
+                    Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+                    SizedBox(width: 8),
                     Text(
-                      'Atrás',
+                      'VOLVER',
                       style: TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ],
