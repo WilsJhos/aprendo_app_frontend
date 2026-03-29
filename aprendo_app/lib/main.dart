@@ -918,48 +918,54 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: themeNotifier.value == ThemeMode.dark
-            ? const Color(0xFF1A1640)
-            : const Color(0xFF6C63FF),
-        title: Text(
-          widget.gameTitle,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
+    return PopScope(
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+          try {
+            await flutterTts.stop();
+          } catch (e) {
+            print('[DEBUG] Error stopping TTS on pop: $e');
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: themeNotifier.value == ThemeMode.dark
+              ? const Color(0xFF1A1640)
+              : const Color(0xFF6C63FF),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () async {
+              try {
+                await flutterTts.stop();
+              } catch (_) {}
+              if (mounted) Navigator.pop(context);
+            },
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              themeNotifier.value == ThemeMode.dark
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
+          title: Text(
+            widget.gameTitle,
+            style: const TextStyle(
               color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
-            onPressed: () => setState(() {
-              themeNotifier.value = themeNotifier.value == ThemeMode.dark
-                  ? ThemeMode.light
-                  : ThemeMode.dark;
-            }),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
-            onPressed: () => controller.reload(),
-            tooltip: 'Recargar',
-          ),
-        ],
-      ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+              onPressed: () => controller.reload(),
+              tooltip: 'Recargar',
+            ),
+          ],
+        ),
       body: Stack(
         children: [
           SafeArea(child: WebViewWidget(controller: controller)),
 
           if (isLoading)
             Container(
-              color: const Color(0xFF0F0C29),
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -978,6 +984,7 @@ class _GamePageState extends State<GamePage> {
             ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
