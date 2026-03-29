@@ -628,6 +628,7 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   late final WebViewController controller;
   bool isLoading = true;
+  bool isExiting = false;
   late final FlutterTts flutterTts;
 
   @override
@@ -662,6 +663,7 @@ class _GamePageState extends State<GamePage> {
       ..addJavaScriptChannel(
         'FlutterTTS',
         onMessageReceived: (msg) async {
+          if (isExiting) return; // Bloquear si estamos saliendo
           try {
             final raw = msg.message;
 
@@ -910,6 +912,7 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
+    isExiting = true;
     try {
       flutterTts.stop();
     } catch (_) {}
@@ -921,6 +924,7 @@ class _GamePageState extends State<GamePage> {
     return PopScope(
       onPopInvoked: (didPop) async {
         if (didPop) {
+          isExiting = true;
           try {
             await flutterTts.stop();
           } catch (e) {
@@ -937,6 +941,7 @@ class _GamePageState extends State<GamePage> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () async {
+              setState(() => isExiting = true);
               try {
                 await flutterTts.stop();
               } catch (_) {}
