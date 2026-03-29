@@ -150,12 +150,12 @@ class _GameListPageState extends State<GameListPage> {
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
+              title: Text(
                 '🌈 Aprendo App',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 20,
-                  color: Colors.white,
+                  color: themeNotifier.value == ThemeMode.dark ? Colors.white : Colors.black87,
                 ),
               ),
               background: Container(
@@ -192,10 +192,10 @@ class _GameListPageState extends State<GameListPage> {
                   children: [
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           '🏆 Ranking de Juegos',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onBackground,
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                           ),
@@ -247,7 +247,9 @@ class _GameListPageState extends State<GameListPage> {
                             margin: const EdgeInsets.only(right: 12),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0x1AFFFFFF),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0x1AFFFFFF)
+                                  : Colors.black.withOpacity(0.05),
                               border: Border.all(color: borderCol, width: 1.5),
                               borderRadius: BorderRadius.circular(18),
                             ),
@@ -266,8 +268,8 @@ class _GameListPageState extends State<GameListPage> {
                                 const SizedBox(height: 4),
                                 Text(
                                   g.name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -281,13 +283,13 @@ class _GameListPageState extends State<GameListPage> {
                                 if (g.lastPlayed.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      'Último: ${g.lastPlayed}',
-                                      style: const TextStyle(
-                                        color: Color(0x99FFFFFF),
-                                        fontSize: 9,
+                                      child: Text(
+                                        'Último: ${g.lastPlayed}',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          fontSize: 9,
+                                        ),
                                       ),
-                                    ),
                                   ),
                               ],
                             ),
@@ -346,10 +348,10 @@ class _GameListPageState extends State<GameListPage> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     '🎮 Juegos Disponibles',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onBackground,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
@@ -462,12 +464,15 @@ class _GameListPageState extends State<GameListPage> {
         children: [
           Text(
             '$icon $label',
-            style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 10),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              fontSize: 10,
+            ),
           ),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -557,8 +562,8 @@ class _GameCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     game.title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
                     ),
@@ -569,8 +574,8 @@ class _GameCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     game.description,
-                    style: const TextStyle(
-                      color: Color(0x80FFFFFF),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                       fontSize: 10,
                     ),
                     textAlign: TextAlign.center,
@@ -744,6 +749,34 @@ class _GamePageState extends State<GamePage> {
             print(
               '[DEBUG][WebView] injected JS forwarding for ${widget.idName}',
             );
+
+            // Sincronizar el tema de la WebView con el de Flutter
+            final isDark = themeNotifier.value == ThemeMode.dark;
+            controller.runJavaScript('''
+              (function() {
+                const isDark = ${isDark};
+                const theme = isDark ? 'dark' : 'light';
+                
+                // Intentar aplicar el tema en el sistema de Django/Tailwind común
+                if (isDark) {
+                  document.documentElement.classList.add('dark');
+                  document.body.classList.add('dark-mode');
+                  localStorage.setItem('theme', 'dark');
+                  localStorage.setItem('color-theme', 'dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  document.body.classList.remove('dark-mode');
+                  localStorage.setItem('theme', 'light');
+                  localStorage.setItem('color-theme', 'light');
+                }
+                
+                // Si existe un botón de switch en la página, intentar sincronizarlo
+                const themeToggle = document.getElementById('theme-toggle');
+                if (themeToggle) {
+                  // Esto depende de cómo esté implementado en el backend
+                }
+              })();
+            ''');
 
             controller.runJavaScript('''
               (function() {
