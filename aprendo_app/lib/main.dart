@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter_tts/flutter_tts.dart';
 
+// Notificador global para el tema de la aplicación
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
+
 void main() {
   runApp(const AprendoApp());
 }
@@ -15,18 +18,32 @@ class AprendoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Aprendo App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6C63FF),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-      ),
-      home: const GameListPage(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, mode, __) {
+        return MaterialApp(
+          title: 'Aprendo App',
+          debugShowCheckedModeBanner: false,
+          themeMode: mode,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF6C63FF),
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+            fontFamily: 'Roboto',
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF6C63FF),
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+            fontFamily: 'Roboto',
+          ),
+          home: const GameListPage(),
+        );
+      },
     );
   }
 }
@@ -108,28 +125,55 @@ class _GameListPageState extends State<GameListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0C29),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 160,
             pinned: true,
-            backgroundColor: const Color(0xFF1A1640),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1640)
+                : const Color(0xFF6C63FF),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  themeNotifier.value == ThemeMode.dark
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  themeNotifier.value = themeNotifier.value == ThemeMode.dark
+                      ? ThemeMode.light
+                      : ThemeMode.dark;
+                },
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               title: const Text(
                 '🌈 Aprendo App',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: Colors.white,
+                ),
               ),
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF6C63FF),
-                      Color(0xFF302B63),
-                      Color(0xFF0F0C29),
-                    ],
+                    colors: themeNotifier.value == ThemeMode.dark
+                        ? [
+                            const Color(0xFF6C63FF),
+                            const Color(0xFF302B63),
+                            const Color(0xFF0F0C29),
+                          ]
+                        : [
+                            const Color(0xFF6C63FF),
+                            const Color(0xFF918AFA),
+                            const Color(0xFFAFA9FF),
+                          ],
                   ),
                 ),
                 child: const Center(
@@ -277,8 +321,10 @@ class _GameListPageState extends State<GameListPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0x1AFFFFFF),
-                        border: Border.all(color: const Color(0x1AFFFFFF)),
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? const Color(0x1AFFFFFF) 
+                            : Colors.grey.withOpacity(0.1),
+                        border: Border.all(color: Theme.of(context).dividerColor),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Text(
@@ -586,7 +632,11 @@ class _GamePageState extends State<GamePage> {
     _initTts();
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF0F0C29))
+      ..setBackgroundColor(
+        themeNotifier.value == ThemeMode.dark
+            ? const Color(0xFF0F0C29)
+            : Colors.white,
+      )
       ..addJavaScriptChannel(
         'FlutterStorage',
         onMessageReceived: (msg) async {
@@ -836,9 +886,11 @@ class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0C29),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1640),
+        backgroundColor: themeNotifier.value == ThemeMode.dark
+            ? const Color(0xFF1A1640)
+            : const Color(0xFF6C63FF),
         title: Text(
           widget.gameTitle,
           style: const TextStyle(
@@ -848,6 +900,19 @@ class _GamePageState extends State<GamePage> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              themeNotifier.value == ThemeMode.dark
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
+              color: Colors.white,
+            ),
+            onPressed: () => setState(() {
+              themeNotifier.value = themeNotifier.value == ThemeMode.dark
+                  ? ThemeMode.light
+                  : ThemeMode.dark;
+            }),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
             onPressed: () => controller.reload(),
@@ -859,42 +924,6 @@ class _GamePageState extends State<GamePage> {
         children: [
           SafeArea(child: WebViewWidget(controller: controller)),
 
-          // Botón Atrás Premium (Flotante con Glassmorphism)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: 16,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: const [
-                    Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    SizedBox(width: 8),
-                  ],
-                ),
-              ),
-            ),
-          ),
           if (isLoading)
             Container(
               color: const Color(0xFF0F0C29),
