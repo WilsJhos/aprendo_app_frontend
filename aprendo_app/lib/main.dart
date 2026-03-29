@@ -625,16 +625,31 @@ class GamePage extends StatefulWidget {
   State<GamePage> createState() => _GamePageState();
 }
 
-class _GamePageState extends State<GamePage> {
+class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   late final WebViewController controller;
   bool isLoading = true;
   bool isExiting = false;
   late final FlutterTts flutterTts;
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _stopAllSpeech();
+    }
+  }
+
+  Future<void> _stopAllSpeech() async {
+    isExiting = true;
+    try {
+      await flutterTts.stop();
+      await controller.runJavaScript('if(window.speechSynthesis) window.speechSynthesis.cancel();');
+    } catch (_) {}
+  }
+
+  @override
   void initState() {
     super.initState();
-    // Voces TTS
+    WidgetsBinding.instance.addObserver(this);
     _initTts();
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -752,31 +767,12 @@ class _GamePageState extends State<GamePage> {
               '[DEBUG][WebView] injected JS forwarding for ${widget.idName}',
             );
 
-            // Sincronizar el tema de la WebView con el de Flutter
             final isDark = themeNotifier.value == ThemeMode.dark;
             controller.runJavaScript('''
               (function() {
-                const isDark = ${isDark};
-                const theme = isDark ? 'dark' : 'light';
-                
-                // Intentar aplicar el tema en el sistema de Django/Tailwind común
-                if (isDark) {
-                  document.documentElement.classList.add('dark');
-                  document.body.classList.add('dark-mode');
-                  localStorage.setItem('theme', 'dark');
-                  localStorage.setItem('color-theme', 'dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                  document.body.classList.remove('dark-mode');
-                  localStorage.setItem('theme', 'light');
-                  localStorage.setItem('color-theme', 'light');
-                }
-                
-                // Si existe un botón de switch en la página, intentar sincronizarlo
-                const themeToggle = document.getElementById('theme-toggle');
-                if (themeToggle) {
-                  // Esto depende de cómo esté implementado en el backend
-                }
+                const theme = '${isDark ? 'dark' : 'light'}';
+                document.documentElement.classList.toggle('dark', ${isDark});
+                localStorage.setItem('theme', theme);
               })();
             ''');
 
@@ -912,10 +908,8 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
-    isExiting = true;
-    try {
-      flutterTts.stop();
-    } catch (_) {}
+    WidgetsBinding.instance.removeObserver(this);
+    _stopAllSpeech();
     super.dispose();
   }
 
@@ -941,10 +935,7 @@ class _GamePageState extends State<GamePage> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () async {
-              setState(() => isExiting = true);
-              try {
-                await flutterTts.stop();
-              } catch (_) {}
+              await _stopAllSpeech();
               if (mounted) Navigator.pop(context);
             },
           ),
