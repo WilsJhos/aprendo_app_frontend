@@ -641,9 +641,15 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   Future<void> _stopAllSpeech() async {
     isExiting = true;
     try {
+      // 1. Silenciar el motor de voz de Android de inmediato
+      await flutterTts.setVolume(0.0);
       await flutterTts.stop();
-      await controller.runJavaScript('if(window.speechSynthesis) window.speechSynthesis.cancel();');
-    } catch (_) {}
+      // 2. Silenciar el navegador interno
+      await controller.runJavaScript('if(window.speechSynthesis) { window.speechSynthesis.cancel(); }');
+      print('[DEBUG] Detención de voz completada');
+    } catch (e) {
+      print('[DEBUG] Error al detener voz: $e');
+    }
   }
 
   @override
@@ -916,14 +922,12 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return PopScope(
+      canPop: false,
       onPopInvoked: (didPop) async {
-        if (didPop) {
-          isExiting = true;
-          try {
-            await flutterTts.stop();
-          } catch (e) {
-            print('[DEBUG] Error stopping TTS on pop: $e');
-          }
+        if (didPop) return;
+        await _stopAllSpeech();
+        if (mounted) {
+          Navigator.pop(context);
         }
       },
       child: Scaffold(
