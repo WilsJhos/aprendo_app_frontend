@@ -641,14 +641,17 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   Future<void> _stopAllSpeech() async {
     isExiting = true;
     try {
-      // 1. Silenciar el motor de voz de Android de inmediato
+      // 1. Forzar una limpieza de la cola de voz (truco efectivo en Android)
       await flutterTts.setVolume(0.0);
+      await flutterTts.speak(" ");
       await flutterTts.stop();
+      
       // 2. Silenciar el navegador interno
       await controller.runJavaScript('if(window.speechSynthesis) { window.speechSynthesis.cancel(); }');
-      print('[DEBUG] Detención de voz completada');
+      
+      print('[DEBUG] Corte total de audio finalizado');
     } catch (e) {
-      print('[DEBUG] Error al detener voz: $e');
+      print('[DEBUG] Error al silenciar: $e');
     }
   }
 
@@ -720,6 +723,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
             print(
               '[DEBUG][FlutterTTS] speak params -> text: "$text", rate: $rate, pitch: $pitch',
             );
+            await flutterTts.setVolume(1.0); // Asegurar volumen audible
             await flutterTts.setSpeechRate(rate);
             await flutterTts.setPitch(pitch);
             await flutterTts.speak(text);
@@ -881,6 +885,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     flutterTts = FlutterTts();
     try {
       // idioma español
+      await flutterTts.setVolume(1.0); // FORZAR VOLUMEN AL INICIO
       await flutterTts.setLanguage('es-ES');
       await flutterTts.awaitSpeakCompletion(true);
       await flutterTts.setSpeechRate(0.45);
